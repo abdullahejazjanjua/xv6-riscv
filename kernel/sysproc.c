@@ -107,3 +107,9 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+
+uint64 sys_kmemfree(void)
+{
+  return (uint64) kmemfree();
+}
