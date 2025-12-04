@@ -16,3 +16,7 @@ kernel/kernel
 user/usys.S
 .gdbinit
 TAGS
+
+
+# MacOS Shit
+.DS_Store
