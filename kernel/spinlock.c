@@ -18,10 +18,15 @@ initlock(struct spinlock *lk, char *name)
 
 // Acquire the lock.
 // Loops (spins) until the lock is acquired.
-void
-acquire(struct spinlock *lk)
+void acquire(struct spinlock *lk)
 {
   push_off(); // disable interrupts to avoid deadlock.
+  // We disable interrupts here because if an interrupt handler (because a char was entered in the buffer) is called,
+  // while the lock holding thread is in critical section, then the handler will try to acquire the lock and
+  // wait as it held by this thread. This thread is waiting for the handler to finish i.e DEADLOCK
+
+
+
   if(holding(lk))
     panic("acquire");
 
@@ -43,8 +48,7 @@ acquire(struct spinlock *lk)
 }
 
 // Release the lock.
-void
-release(struct spinlock *lk)
+void release(struct spinlock *lk)
 {
   if(!holding(lk))
     panic("release");
@@ -73,34 +77,35 @@ release(struct spinlock *lk)
 
 // Check whether this cpu is holding the lock.
 // Interrupts must be off.
-int
-holding(struct spinlock *lk)
+int holding(struct spinlock *lk)
 {
   int r;
   r = (lk->locked && lk->cpu == mycpu());
   return r;
 }
 
+// Lets say, we have nested 3 locks calls: acquire(l1) acquire(l2) acquire(l3) release(l1) release(l2) release(l3).
+// The first call to release would enable interrupts and cause deadlocks. So, xv6 uses push_off() & pop_off(), which enable
+// interrupts when all release are called by maintaining a counter (noff) per cpu as interrupts are cpu specific
+
 // push_off/pop_off are like intr_off()/intr_on() except that they are matched:
 // it takes two pop_off()s to undo two push_off()s.  Also, if interrupts
 // are initially off, then push_off, pop_off leaves them off.
 
-void
-push_off(void)
+void push_off(void)
 {
-  int old = intr_get();
+  int old = intr_get(); // Find the previous status of the interrupt (on/off)
 
   // disable interrupts to prevent an involuntary context
   // switch while using mycpu().
   intr_off();
 
   if(mycpu()->noff == 0)
-    mycpu()->intena = old;
+    mycpu()->intena = old; // stores the previous state of interrupt (on/off)
   mycpu()->noff += 1;
 }
 
-void
-pop_off(void)
+void pop_off(void)
 {
   struct cpu *c = mycpu();
   if(intr_get())
@@ -108,6 +113,6 @@ pop_off(void)
   if(c->noff < 1)
     panic("pop_off");
   c->noff -= 1;
-  if(c->noff == 0 && c->intena)
+  if(c->noff == 0 && c->intena) // if counter is 0 and the interrupt was on previously
     intr_on();
 }
