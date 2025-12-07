@@ -134,7 +134,8 @@ runcmd(struct cmd *cmd)
 int
 getcmd(char *buf, int nbuf)
 {
-  write(2, "$ ", 2);
+  char * prompt_start = "> ";
+  write(2, prompt_start, sizeof(prompt_start));
   memset(buf, 0, nbuf);
   gets(buf, nbuf);
   if(buf[0] == 0) // EOF
