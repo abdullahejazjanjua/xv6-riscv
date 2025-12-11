@@ -2,17 +2,14 @@
 #include "../kernel/stat.h"
 #include "../kernel/fs.h"
 #include "../kernel/fcntl.h"
-// #include "../kernel/string.c"
 #include "user.h"
 
 
 char* fmtname(char *path)
 {
   char *p;
-
   for(p=path+strlen(path); p >= path && *p != '/'; p--);
   p++;
-  
   return p;
 
 }
