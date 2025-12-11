@@ -144,7 +144,8 @@ UPROGS=\
 	$U/_forphan\
 	$U/_dorphan\
 	$U/_p0\
-	$U/_p1
+	$U/_p1\
+	$U/_sleep
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
