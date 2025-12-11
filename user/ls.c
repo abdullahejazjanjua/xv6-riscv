@@ -1,11 +1,10 @@
-#include "kernel/types.h"
-#include "kernel/stat.h"
-#include "user/user.h"
-#include "kernel/fs.h"
-#include "kernel/fcntl.h"
+#include "../kernel/types.h"
+#include "../kernel/stat.h"
+#include "../kernel/fs.h"
+#include "../kernel/fcntl.h"
+#include "user.h"
 
-char*
-fmtname(char *path)
+char* fmtname(char *path)
 {
   static char buf[DIRSIZ+1];
   char *p;
@@ -24,8 +23,7 @@ fmtname(char *path)
   return buf;
 }
 
-void
-ls(char *path)
+void ls(char *path)
 {
   char buf[512], *p;
   int fd;
@@ -73,8 +71,7 @@ ls(char *path)
   close(fd);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   int i;
 
