@@ -146,7 +146,8 @@ UPROGS=\
 	$U/_p0\
 	$U/_p1\
 	$U/_sleep\
-	$U/_sixfive
+	$U/_sixfive\
+	$U/_memdump
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
