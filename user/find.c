@@ -19,10 +19,17 @@ void find(char *path, char *filename, char *files[], int *i)
 {
   char buf[512], *p;
   int fd;
-  struct dirent de;
+  struct dirent de; // holds one directory entry
   struct stat st;
   
-  if((fd = open(path, O_RDONLY)) < 0)
+  if((fd = open(path, O_RDONLY)) < 0) // open a file as file  
+                                      //        OR 
+                                      // Directory as a file that contains directory entries dirent
+                                      // Run in terminal
+                                      // > cat b (directory)
+                                      // .
+                                      // ..
+                                      // a>
   {
     fprintf(2, "ls: cannot open %s\n", path);
     return;
@@ -57,19 +64,22 @@ void find(char *path, char *filename, char *files[], int *i)
     }
     case T_DIR:
     { 
-      if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
+      if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf)
+      {
         printf("ls: path too long\n");
         break;
       }
       strcpy(buf, path);
       p = buf + strlen(buf);
-      *p++ = '/';
-      while(read(fd, &de, sizeof(de)) == sizeof(de))
+      *p++ = '/'; // Construct path 
+                  // p = ./
+      while(read(fd, &de, sizeof(de)) == sizeof(de)) // read a directory entry from fd
       {
         if(de.inum == 0)
           continue;
         
-        memmove(p, de.name, DIRSIZ);
+        memmove(p, de.name, DIRSIZ); // Add filename to path
+                                    // ./filenmae
         p[DIRSIZ] = 0;
         
         if(!strcmp(de.name, ".") || !strcmp(de.name, ".."))
