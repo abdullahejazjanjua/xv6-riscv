@@ -1,7 +1,6 @@
 #include "../kernel/types.h"
 #include "../kernel/fcntl.h"
 #include "user.h"
-// #include <string.h>
 
 void  memdump(char *fmt, char *data)
 {
