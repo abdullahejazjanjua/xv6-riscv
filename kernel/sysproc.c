@@ -73,14 +73,15 @@ sys_pause(void)
   argint(0, &n);
   if(n < 0)
     n = 0;
-  acquire(&tickslock);
-  ticks0 = ticks;
-  while(ticks - ticks0 < n){
+  acquire(&tickslock); // ensures that no other process can come
+  ticks0 = ticks; // ticks is a global variable that stores timer 
+  while(ticks - ticks0 < n) // Has enough time passed?
+  {
     if(killed(myproc())){
       release(&tickslock);
       return -1;
     }
-    sleep(&ticks, &tickslock);
+    sleep(&ticks, &tickslock); // Put the process to SLEEPING mode and go into the scheduler to run another process
   }
   release(&tickslock);
   return 0;

@@ -48,7 +48,7 @@ usertrap(void)
 
   struct proc *p = myproc();
   
-  // save user program counter.
+  // save user program counter (PC is at ecall).
   p->trapframe->epc = r_sepc();
   
   if(r_scause() == 8){
@@ -216,4 +216,3 @@ devintr()
     return 0;
   }
 }
-

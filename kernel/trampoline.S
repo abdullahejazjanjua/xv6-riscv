@@ -34,6 +34,7 @@ uservec:
         # each process has a separate p->trapframe memory area,
         # but it's mapped to the same virtual address
         # (TRAPFRAME) in every process's user page table.
+        # (TRAPFRAME) is page in your RAM where proc_context is saved
         li a0, TRAPFRAME
         
         # save the user registers in TRAPFRAME
