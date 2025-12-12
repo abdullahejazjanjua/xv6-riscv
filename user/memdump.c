@@ -57,9 +57,8 @@ void  memdump(char *fmt, char *data)
 }
 
 
-int main(int argc, char *argv[])
+int main()
 {
-  
   char *data, *fmt;
   data = (char*) malloc(sizeof(char));
   fmt = (char*) malloc(sizeof(char));
