@@ -92,6 +92,7 @@ void find(char *path, char *filename, char *files[], int *i)
     }
   }
   close(fd);
+  return; // Go back to previous recursive call
 }
 
 
