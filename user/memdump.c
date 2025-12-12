@@ -1,6 +1,7 @@
 #include "../kernel/types.h"
 #include "../kernel/fcntl.h"
 #include "user.h"
+// #include <string.h>
 
 void  memdump(char *fmt, char *data)
 {
@@ -58,14 +59,13 @@ void  memdump(char *fmt, char *data)
 
 int main(int argc, char *argv[])
 {
-  if(argc != 3)
-  {
-    printf("USAGE: memdump <specifier> <data>");
-    exit(1);
-  }
   
-  char *data = argv[2];
-  char *fmt = argv[1];
+  char *data, *fmt;
+  data = (char*) malloc(sizeof(char));
+  fmt = (char*) malloc(sizeof(char));
+  
+  *data = 'A';
+  *fmt = 'i';
   
   printf("data: %s\n", data);
   printf("fmt: %s\n", fmt);
