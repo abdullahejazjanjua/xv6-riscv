@@ -20,8 +20,9 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  int target_blocks = NDIRECT + NINDIRECT + 10; 
-
+  // int target_blocks = NDIRECT + NINDIRECT + NDINDIRECT;  // fails
+  int target_blocks = NDIRECT + NINDIRECT + 10; // Works
+  
   for(i = 0; i < target_blocks; i++)
   {
     if(write(fd, buf, sizeof(buf)) != sizeof(buf))
