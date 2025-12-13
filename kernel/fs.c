@@ -404,8 +404,8 @@ ireclaim(int dev)
 // returns 0 if out of disk space.
 static uint bmap(struct inode *ip, uint bn)
 {
-  uint addr, *a;
-  struct buf *bp;
+  uint addr, addr1, *a, *a1;
+  struct buf *bp, *bp1;
 
   if(bn < NDIRECT)
   {
@@ -423,6 +423,7 @@ static uint bmap(struct inode *ip, uint bn)
   if(bn < NINDIRECT)
   {
     // Load indirect block, allocating if necessary.
+    // Load a block for holding block addresses
     if((addr = ip->addrs[NDIRECT]) == 0)
     {
       addr = balloc(ip->dev);
@@ -430,19 +431,68 @@ static uint bmap(struct inode *ip, uint bn)
         return 0;
       ip->addrs[NDIRECT] = addr;
     }
-    bp = bread(ip->dev, addr);
-    a = (uint*)bp->data;
-    if((addr = a[bn]) == 0)
+    
+    bp = bread(ip->dev, addr); // Read block into buffer
+    a = (uint*)bp->data; // Get block data array 
+    if((addr = a[bn]) == 0) // If block is unallocated at bn, allocate it
     {
-      addr = balloc(ip->dev);
+      addr = balloc(ip->dev); // allocale it
       if(addr)
       {
-        a[bn] = addr;
+        a[bn] = addr; // Save block address
         log_write(bp);
       }
     }
-    brelse(bp);
+    brelse(bp); // free the buffer
     return addr;
+  }
+  
+  bn -= NINDIRECT;
+  if (bn < NDINDIRECT)
+  {
+    // Load block that holds indirect block addresses
+    if((addr = ip->addrs[NDIRECT+1]) == 0)
+    {
+      addr = balloc(ip->dev);
+      if(addr == 0)
+        return 0;
+      ip->addrs[NDIRECT+1] = addr; // store address of doubly indirect addresses
+    }
+    
+    bp = bread(ip->dev, addr); // load the block of doubly indirect addresses into buffer
+    a = (uint*)bp->data; // fetch the block of doubly indirect addresses
+    
+    uint idx1 = bn / NINDIRECT;
+    
+    if((addr1 = a[idx1]) == 0) // index into block of doubly indirect and see if a particular indirect block address is allocated 
+    {
+      addr1 = balloc(ip->dev); // Alocate a block of indirect addresses
+      
+      if(addr1 == 0)
+        return 0;
+      
+      a[idx1] = addr1; // Store that block address in doubly block
+      log_write(bp);
+      brelse(bp);
+      
+      uint idx2 = bn % NINDIRECT;
+      bp1 = bread(ip->dev, addr1); // Load the allocated block indirect addresses into buffer
+      a1 = (uint*)bp1->data; // fetch the allocated block indirect addresses
+      
+      if((addr = a1[idx2]) == 0) // index into allocated block indirect addresses and see if it has address to data block
+      {
+        addr = balloc(ip->dev); // allocate it 
+        if(addr == 0)
+          return 0; 
+        
+        a1[idx2] = addr; // store the address of data block in the block indirect addresses
+        log_write(bp1);
+      } 
+      brelse(bp1);   
+      
+      return addr;
+    }
+
   }
 
   panic("bmap: out of range");
