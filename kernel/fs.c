@@ -402,6 +402,11 @@ ireclaim(int dev)
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
 // returns 0 if out of disk space.
+ 
+// Terminology Clarification
+  // When we say singly-indirect block we mean a block that holds address of data blocks
+  // When we say doubly-indirect block we mean a block that holds address of indirect blocks
+
 static uint bmap(struct inode *ip, uint bn)
 {
   uint addr, *a;
@@ -409,37 +414,37 @@ static uint bmap(struct inode *ip, uint bn)
 
   if(bn < NDIRECT)
   {
+    // index into block number and see if there is an address to a data block
     if((addr = ip->addrs[bn]) == 0)
     {
-      addr = balloc(ip->dev); // Allocate the block
-      if(addr == 0) // Check if block was allocated
+      addr = balloc(ip->dev); // allocate the data block
+      if(addr == 0) // check if data block was allocated
         return 0;
-      ip->addrs[bn] = addr; // Store the block address
+      ip->addrs[bn] = addr; // store the data block address in block addresses array
     }
     return addr;
   }
-  bn -= NDIRECT;
+  bn -= NDIRECT; // remaining blocks 
 
   if(bn < NINDIRECT)
   {
-    // Load indirect block, allocating if necessary.
-    // Load a block for holding block addresses
+    // index into the block number and see if there is an address to a singly-indirect block
     if((addr = ip->addrs[NDIRECT]) == 0)
     {
-      addr = balloc(ip->dev);
+      addr = balloc(ip->dev); // allocate the single-indirect block
       if(addr == 0)
         return 0;
-      ip->addrs[NDIRECT] = addr;
-    }
+      ip->addrs[NDIRECT] = addr; // store address of singly-indirect block in block addresses array
+    } 
     
-    bp = bread(ip->dev, addr); // Read block into buffer
-    a = (uint*)bp->data; // Get block data array 
-    if((addr = a[bn]) == 0) // If block is unallocated at bn, allocate it
+    bp = bread(ip->dev, addr); // read singly-indirect block into buffer
+    a = (uint*)bp->data; // get singly-indirect block as an array of data block addresses
+    if((addr = a[bn]) == 0) // if the indexed data block is unallocated
     {
-      addr = balloc(ip->dev); // allocale it
+      addr = balloc(ip->dev); // allocale data block
       if(addr)
       {
-        a[bn] = addr; // Save block address
+        a[bn] = addr; // save data block address in singly-indirect block at bn
         log_write(bp);
       }
     }
@@ -450,44 +455,46 @@ static uint bmap(struct inode *ip, uint bn)
   bn -= NINDIRECT;
   if (bn < NDINDIRECT)
   {
-    // Load block that holds indirect block addresses 
+    // index into block number and see if doubly-indirect block is allocated
     if((addr = ip->addrs[NDIRECT+1]) == 0)
     {
-      addr = balloc(ip->dev);
+      addr = balloc(ip->dev); // allocate doubly-indirect block 
       if(addr == 0)
         return 0;
-      ip->addrs[NDIRECT+1] = addr; // store address of doubly indirect addresses
+      ip->addrs[NDIRECT+1] = addr; // store address of doubly indirect addresses in address array in inode
     }
   
     
-    bp = bread(ip->dev, addr); // load the block of doubly indirect addresses into buffer
+    bp = bread(ip->dev, addr); // load the doubly-indirect block into buffer
     a = (uint*)bp->data; // fetch the block of doubly indirect addresses
-    uint idx1 = bn / NINDIRECT;
+    uint idx1 = bn / NINDIRECT; // compute the index into doubly-indirect block
       
-    if((addr = a[idx1]) == 0) // index into block of doubly indirect and see if a particular indirect block address is allocated 
+    // index into doubly-indirect block and see if there is a address to singly-indirect block
+    if((addr = a[idx1]) == 0) 
     {
-      addr = balloc(ip->dev); // Alocate a block of indirect addresses
+      addr = balloc(ip->dev); // alocate a singly-indirect block
       if (addr == 0)
       {
         brelse(bp);
         return 0;
       }
-      a[idx1] = addr; // Store that block address in doubly block
+      a[idx1] = addr; // store that singly-indirect block address in doubly-indirect block
       log_write(bp);
       
     }
     brelse(bp);
     
-    uint idx2 = bn % NINDIRECT;
-    bp = bread(ip->dev, addr); // Load the allocated block indirect addresses into buffer
-    a = (uint*)bp->data; // fetch the allocated block indirect addresses
-        
-    if((addr = a[idx2]) == 0) // index into allocated block indirect addresses and see if it has address to data block
+    bp = bread(ip->dev, addr); // Load the allocated singly-indirect block into buffer
+    a = (uint*)bp->data; // fetch the allocated singly-indirect block
+    uint idx2 = bn % NINDIRECT; // compute address into singly-indirect block
+    
+    // index into singly-indirect block and see if it has address to data block
+    if((addr = a[idx2]) == 0) 
     {
-      addr = balloc(ip->dev); // allocate it 
+      addr = balloc(ip->dev); // allocate the data block
       if(addr)
       {
-        a[idx2] = addr; // store the address of data block in the block indirect addresses
+        a[idx2] = addr; // store the  data block address in the singly-indirect block
         log_write(bp);
       }
     }
