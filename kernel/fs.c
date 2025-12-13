@@ -402,19 +402,19 @@ ireclaim(int dev)
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
 // returns 0 if out of disk space.
-static uint
-bmap(struct inode *ip, uint bn)
+static uint bmap(struct inode *ip, uint bn)
 {
   uint addr, *a;
   struct buf *bp;
 
   if(bn < NDIRECT)
   {
-    if((addr = ip->addrs[bn]) == 0){
-      addr = balloc(ip->dev);
-      if(addr == 0)
+    if((addr = ip->addrs[bn]) == 0)
+    {
+      addr = balloc(ip->dev); // Allocate the block
+      if(addr == 0) // Check if block was allocated
         return 0;
-      ip->addrs[bn] = addr;
+      ip->addrs[bn] = addr; // Store the block address
     }
     return addr;
   }
@@ -435,7 +435,8 @@ bmap(struct inode *ip, uint bn)
     if((addr = a[bn]) == 0)
     {
       addr = balloc(ip->dev);
-      if(addr){
+      if(addr)
+      {
         a[bn] = addr;
         log_write(bp);
       }
