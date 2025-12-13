@@ -467,12 +467,14 @@ static uint bmap(struct inode *ip, uint bn)
     if((addr = a[idx1]) == 0) // index into block of doubly indirect and see if a particular indirect block address is allocated 
     {
       addr = balloc(ip->dev); // Alocate a block of indirect addresses
-        
-      if(addr)
+      if (addr == 0)
       {
-        a[idx1] = addr; // Store that block address in doubly block
-        log_write(bp);
+        brelse(bp);
+        return 0;
       }
+      a[idx1] = addr; // Store that block address in doubly block
+      log_write(bp);
+      
     }
     brelse(bp);
     
