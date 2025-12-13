@@ -45,3 +45,4 @@ entry("sbrk");
 entry("pause");
 entry("uptime");
 entry("kmemfree");
+entry("symlink");

@@ -29,6 +29,7 @@ char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
 int kmemfree(void);
+int symlink(char *target, char *path);
 
 // ulib.c
 int stat(const char*, struct stat*);

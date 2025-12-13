@@ -503,3 +503,36 @@ sys_pipe(void)
   }
   return 0;
 }
+
+int sys_symlink(void)
+{
+  char target[MAXPATH], path[MAXPATH];
+  struct inode *ip;
+  
+  begin_op(); // log that you are doing something to fs
+  if(argstr(0, target, MAXPATH) < 0 || argstr(1, path, MAXPATH) < 0)
+  {
+    end_op(); 
+    return -1;
+  }
+  
+  // allocates inode and populate it
+  if ((ip = create(path, T_SYMLINK, 0, 0)) == 0)
+  {
+    end_op(); 
+    return -1;
+  }
+  
+  // write [target] to data block allocated to path
+  if ((writei(ip, 0, (uint64) &target, 0, strlen(target))) < strlen(target))
+  {
+    iunlockput(ip); 
+    end_op();
+    return -1;
+  }
+
+  iunlockput(ip); // unlock inode lock and saved it in inode table
+  end_op(); // log that you are done doing something to fs
+ 
+  return 0;
+}
