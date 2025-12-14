@@ -144,6 +144,7 @@ UPROGS=\
 	$U/_forphan\
 	$U/_dorphan\
 	$U/_bigfile\
+	$U/_symlinktest\
 	$U/_p0\
 	$U/_p1\
 	$U/_sleep\
