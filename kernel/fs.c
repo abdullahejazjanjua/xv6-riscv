@@ -734,8 +734,7 @@ skipelem(char *path, char *name)
 // If parent != 0, return the inode for the parent and copy the final
 // path element into name, which must have room for DIRSIZ bytes.
 // Must be called inside a transaction since it calls iput().
-static struct inode*
-namex(char *path, int nameiparent, char *name)
+static struct inode* namex(char *path, int nameiparent, char *name)
 {
   struct inode *ip, *next;
 

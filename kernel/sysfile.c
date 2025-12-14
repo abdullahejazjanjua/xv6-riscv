@@ -16,6 +16,8 @@
 #include "file.h"
 #include "fcntl.h"
 
+#define MAXATTEMPTS 10
+
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
 static int
@@ -242,8 +244,7 @@ bad:
   return -1;
 }
 
-static struct inode*
-create(char *path, short type, short major, short minor)
+static struct inode* create(char *path, short type, short major, short minor)
 {
   struct inode *ip, *dp;
   char name[DIRSIZ];
@@ -301,8 +302,7 @@ create(char *path, short type, short major, short minor)
   return 0;
 }
 
-uint64
-sys_open(void)
+uint64 sys_open(void)
 {
   char path[MAXPATH];
   int fd, omode;
@@ -316,32 +316,69 @@ sys_open(void)
 
   begin_op();
 
-  if(omode & O_CREATE){
+  if(omode & O_CREATE)
+  {
     ip = create(path, T_FILE, 0, 0);
-    if(ip == 0){
+    if(ip == 0)
+    {
       end_op();
       return -1;
     }
-  } else {
-    if((ip = namei(path)) == 0){
-      end_op();
-      return -1;
-    }
-    ilock(ip);
-    if(ip->type == T_DIR && omode != O_RDONLY){
-      iunlockput(ip);
-      end_op();
-      return -1;
+  } 
+  else 
+  {
+    for (int attempts = 0; attempts < MAXATTEMPTS; attempts++)
+    {
+      
+      if ((ip = namei(path)) == 0) // retreive inode number from path
+      {
+        end_op();
+        return -1;
+      }
+      ilock(ip);
+      
+      if(ip->type == T_SYMLINK && !(omode & O_NOFOLLOW))
+      {
+        
+        if(attempts == MAXATTEMPTS - 1) // check if we reach our limit without reaching the actual file
+        {
+          iunlockput(ip);
+          end_op();
+          return -1;
+        }
+        
+        int len = readi(ip, 0, (uint64) path, 0, MAXPATH - 1);
+        if(len < 0)
+        {
+          iunlockput(ip);
+          end_op();
+          return -1;
+        }
+        path[len] = 0;
+        
+        iunlockput(ip);
+      }
+      else
+        break; // not a symlink
     }
   }
-
-  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
+  
+  if(ip->type == T_DIR && omode != O_RDONLY)
+  {
     iunlockput(ip);
     end_op();
     return -1;
   }
 
-  if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
+  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV))
+  {
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }  
+  // Allocate a file structure || Assign a file decriptor to it
+  if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0)
+  {
     if(f)
       fileclose(f);
     iunlockput(ip);
@@ -349,10 +386,18 @@ sys_open(void)
     return -1;
   }
 
-  if(ip->type == T_DEVICE){
+  if(ip->type == T_DEVICE)
+  {
     f->type = FD_DEVICE;
     f->major = ip->major;
-  } else {
+  } 
+  else if (ip->type == T_SYMLINK)
+  {
+    f->type = FD_SYMLINK;
+    f->off = 0;
+  }
+  else
+  {
     f->type = FD_INODE;
     f->off = 0;
   }
@@ -360,7 +405,8 @@ sys_open(void)
   f->readable = !(omode & O_WRONLY);
   f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
 
-  if((omode & O_TRUNC) && ip->type == T_FILE){
+  if((omode & O_TRUNC) && ip->type == T_FILE)
+  {
     itrunc(ip);
   }
 
