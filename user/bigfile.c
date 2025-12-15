@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
   }
 
   // int target_blocks = NDIRECT + NINDIRECT + NDINDIRECT;  // fails
-  int target_blocks = NDIRECT + NINDIRECT + 10; // Works
+  int target_blocks = 65803; // Works
   
   for(i = 0; i < target_blocks; i++)
   {
