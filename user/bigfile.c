@@ -1,8 +1,8 @@
 #include "../kernel/types.h"
 #include "../kernel/stat.h"
-#include "user.h"
 #include "../kernel/fcntl.h"
 #include "../kernel/fs.h" 
+#include "user.h"
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +20,6 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  // int target_blocks = NDIRECT + NINDIRECT + NDINDIRECT;  // fails
   int target_blocks = 65803; // Works
   
   for(i = 0; i < target_blocks; i++)
@@ -31,13 +30,9 @@ int main(int argc, char *argv[])
       exit(1);
     }
     
-    if (i == (NDIRECT + NINDIRECT - 1)) 
+    if (i % 100 == 0 && i != 0) 
     {
-       printf("Milestone: Finished Singly-Indirect blocks (Block %d)\n", i);
-    }
-    if (i == (NDIRECT + NINDIRECT)) 
-    {
-       printf("Milestone: SUCCESSFULLY wrote first Doubly-Indirect block (Block %d)!\n", i);
+       printf("Milestone: Finished writing %d blocks\n", i);
     }
   }
 
