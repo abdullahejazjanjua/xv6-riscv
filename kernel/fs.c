@@ -196,17 +196,18 @@ static struct inode* iget(uint dev, uint inum);
 // Mark it as allocated by  giving it type type.
 // Returns an unlocked but allocated and referenced inode,
 // or NULL if there is no free inode.
-struct inode*
-ialloc(uint dev, short type)
+struct inode* ialloc(uint dev, short type)
 {
   int inum;
   struct buf *bp;
   struct dinode *dip;
 
-  for(inum = 1; inum < sb.ninodes; inum++){
+  for(inum = 1; inum < sb.ninodes; inum++)
+  {
     bp = bread(dev, IBLOCK(inum, sb));
     dip = (struct dinode*)bp->data + inum%IPB;
-    if(dip->type == 0){  // a free inode
+    if(dip->type == 0)
+    {  // a free inode
       memset(dip, 0, sizeof(*dip));
       dip->type = type;
       log_write(bp);   // mark it allocated on the disk
@@ -244,8 +245,7 @@ iupdate(struct inode *ip)
 // Find the inode with number inum on device dev
 // and return the in-memory copy. Does not lock
 // the inode and does not read it from disk.
-static struct inode*
-iget(uint dev, uint inum)
+static struct inode* iget(uint dev, uint inum)
 {
   struct inode *ip, *empty;
 
@@ -253,8 +253,10 @@ iget(uint dev, uint inum)
 
   // Is the inode already in the table?
   empty = 0;
-  for(ip = &itable.inode[0]; ip < &itable.inode[NINODE]; ip++){
-    if(ip->ref > 0 && ip->dev == dev && ip->inum == inum){
+  for(ip = &itable.inode[0]; ip < &itable.inode[NINODE]; ip++)
+  {
+    if(ip->ref > 0 && ip->dev == dev && ip->inum == inum)
+    {
       ip->ref++;
       release(&itable.lock);
       return ip;

@@ -249,12 +249,17 @@ static struct inode* create(char *path, short type, short major, short minor)
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
-  if((dp = nameiparent(path, name)) == 0)
+  // store inode of parent into dp and last element of path into name
+  // so path = "foo/bar"
+  // store dp = inode of foo
+  // name = "bar"
+  if((dp = nameiparent(path, name)) == 0) 
     return 0;
 
   ilock(dp);
 
-  if((ip = dirlookup(dp, name, 0)) != 0){
+  if((ip = dirlookup(dp, name, 0)) != 0) // check if name exists in dp and return its inode
+  {
     iunlockput(dp);
     ilock(ip);
     if(type == T_FILE && (ip->type == T_FILE || ip->type == T_DEVICE))
@@ -263,7 +268,8 @@ static struct inode* create(char *path, short type, short major, short minor)
     return 0;
   }
 
-  if((ip = ialloc(dp->dev, type)) == 0){
+  if((ip = ialloc(dp->dev, type)) == 0) // allocate inode for name in dp
+  {
     iunlockput(dp);
     return 0;
   }
@@ -274,7 +280,8 @@ static struct inode* create(char *path, short type, short major, short minor)
   ip->nlink = 1;
   iupdate(ip);
 
-  if(type == T_DIR){  // Create . and .. entries.
+  if(type == T_DIR)
+  {  // Create . and .. entries.
     // No ip->nlink++ for ".": avoid cyclic ref count.
     if(dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)
       goto fail;
@@ -283,7 +290,8 @@ static struct inode* create(char *path, short type, short major, short minor)
   if(dirlink(dp, name, ip->inum) < 0)
     goto fail;
 
-  if(type == T_DIR){
+  if(type == T_DIR)
+  {
     // now that success is guaranteed:
     dp->nlink++;  // for ".."
     iupdate(dp);
